@@ -4,7 +4,7 @@ import {
   ShoppingCart, Plus, Search, Filter, Truck, CheckCircle, 
   Clock, DollarSign, X, Download, Printer, Send, 
   MoreHorizontal, Users, Package, FileCheck, ArrowUpCircle,
-  TrendingUp, Info, ChevronDown, ListOrdered, Factory
+  TrendingUp, Info, ChevronDown, ListOrdered, Factory, Trash2
 } from 'lucide-react';
 
 interface PurchaseOrder {
@@ -225,21 +225,21 @@ export default function PurchaseModule() {
                   <X size={20} />
                </button>
             </div>
-            <form onSubmit={createPO} className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
+             <form onSubmit={createPO} className="space-y-6 max-h-[75vh] overflow-y-auto px-1 pr-2">
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                     <label className="text-[10px] font-black uppercase text-secondary mb-1 block tracking-widest pl-1">PO Date</label>
+                     <label className="text-[10px] font-black uppercase text-secondary mb-1 block tracking-widest pl-1">P.O. Date</label>
                      <input 
                        value={poDate}
                        onChange={(e) => setPoDate(e.target.value)}
                        type="date" 
                        required 
-                       className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-primary focus:border-accent-cyan transition-all" 
+                       className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-primary focus:ring-4 focus:ring-accent-cyan/10 transition-all" 
                      />
                   </div>
                   <div className="space-y-1.5">
                      <label className="text-[10px] font-black uppercase text-secondary mb-1 block tracking-widest pl-1">Exp. Delivery Date</label>
-                     <input name="expectedDate" type="date" required className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-primary focus:border-accent-cyan transition-all" />
+                     <input name="expectedDate" type="date" required className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-primary focus:ring-4 focus:ring-accent-cyan/10 transition-all" />
                   </div>
                </div>
 
@@ -249,124 +249,160 @@ export default function PurchaseModule() {
                     name="vendor" 
                     required 
                     list="vendor-list"
-                    placeholder="Type Vendor Name"
+                    placeholder="Enter or Select Supplier name..."
                     onChange={(e) => {
                       const val = e.target.value;
                       const found = vendors.find(v => v.name === val);
                       setSelectedVendorInfo(found || null);
                     }}
-                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold focus:border-accent-cyan transition-all" 
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-black text-primary focus:ring-4 focus:ring-accent-cyan/10 transition-all italic h-[56px]" 
                   />
                </div>
 
                {selectedVendorInfo && (
-                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 animate-in fade-in slide-in-from-top-1">
-                    <p className="text-[9px] font-black uppercase text-secondary tracking-widest mb-2">Vendor Details</p>
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-5 bg-primary/5 rounded-[32px] border border-primary/10"
+                  >
+                    <p className="text-[9px] font-black uppercase text-secondary tracking-widest mb-3 opacity-60">Vendor Direct Information</p>
+                    <div className="grid grid-cols-2 gap-4 text-[10px]">
                       <div>
-                        <span className="text-secondary">Contact:</span>
-                        <p className="font-bold text-primary">{selectedVendorInfo.contactPerson}</p>
+                        <span className="text-secondary font-bold uppercase block mb-1">Contact:</span>
+                        <p className="font-black text-primary italic text-xs">{selectedVendorInfo.contactPerson}</p>
                       </div>
                       <div>
-                        <span className="text-secondary">Phone:</span>
-                        <p className="font-bold text-primary">{selectedVendorInfo.phone}</p>
+                        <span className="text-secondary font-bold uppercase block mb-1">Phone:</span>
+                        <p className="font-black text-primary italic text-xs">{selectedVendorInfo.phone}</p>
                       </div>
-                      <div className="col-span-2">
-                        <span className="text-secondary">Address:</span>
-                        <p className="font-bold text-primary leading-tight">{selectedVendorInfo.address}</p>
+                      <div className="col-span-2 mt-2">
+                        <span className="text-secondary font-bold uppercase block mb-1">Office Address:</span>
+                        <p className="font-bold text-primary leading-tight opacity-80">{selectedVendorInfo.address}</p>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                )}
 
-               <div className="p-6 bg-gray-50/50 rounded-[30px] border border-gray-100 space-y-4">
-                  <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">Add Materials / Items</p>
+               <div className="p-8 bg-gray-50/50 rounded-[40px] border border-gray-100 space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+                     <p className="text-[10px] font-black uppercase text-primary tracking-widest flex items-center gap-2">
+                        <Package size={14} className="text-accent-cyan" /> Item Selection & Listing
+                     </p>
+                     <span className="text-[9px] font-black text-secondary bg-white px-3 py-1 rounded-full border border-gray-100 uppercase tracking-widest">{poItems.length} Added</span>
+                  </div>
                   
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 gap-2">
+                  <div className="space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-[9px] font-black text-secondary uppercase tracking-widest ml-1 opacity-60">Choose Material / Supply</label>
                       <select 
                         value={currentItem.id}
                         onChange={(e) => {
                           const item = inventory.find(i => i.id === e.target.value);
                           if (item) {
                             setCurrentItem({ ...currentItem, id: item.id, name: item.name, unit: item.quantityUom, rate: item.purchasePrice });
+                          } else if (e.target.value === 'CUSTOM') {
+                            setCurrentItem({ ...currentItem, id: 'CUSTOM', name: 'Custom Item Name' });
                           }
                         }}
-                        className="w-full px-4 py-2 text-xs font-bold bg-white border border-gray-200 rounded-xl outline-none"
+                        className="w-full px-5 py-4 text-xs font-black bg-white border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-accent-cyan/10 transition-all h-[52px] shadow-sm italic"
                       >
-                        <option value="">Select Material from Inventory</option>
+                        <option value="" className="font-sans">-- Select Stock Item --</option>
                         {inventory.map(i => (
-                          <option key={i.id} value={i.id}>{i.name}</option>
+                          <option key={i.id} value={i.id} className="font-sans">{i.name} ({i.quantityUom}) - Stock: {i.currentStock}</option>
                         ))}
+                        <option value="CUSTOM" className="font-sans font-bold text-accent-cyan">+ Miscellaneous / Custom Item</option>
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black text-secondary uppercase">Qty</label>
+                    {currentItem.id === 'CUSTOM' && (
+                      <input 
+                        placeholder="Enter item name..."
+                        className="w-full px-5 py-3 bg-white border border-gray-100 rounded-2xl outline-none text-xs font-bold"
+                        onChange={(e) => setCurrentItem({ ...currentItem, name: e.target.value })}
+                      />
+                    )}
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-secondary uppercase tracking-widest ml-1">Quantity</label>
                         <input 
                           type="number" 
                           value={currentItem.qty}
                           onChange={(e) => setCurrentItem({ ...currentItem, qty: Number(e.target.value) })}
-                          className="w-full px-3 py-2 text-xs font-bold bg-white border border-gray-200 rounded-xl"
+                          className="w-full px-4 py-3 text-sm font-black bg-white border border-gray-100 rounded-2xl focus:ring-4 focus:ring-accent-cyan/10 transition-all h-[48px]"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[8px] font-black text-secondary uppercase">Rate (₹)</label>
+                      <div className="space-y-1.5">
+                        <label className="text-[8px] font-black text-secondary uppercase tracking-widest ml-1">Est. Rate (₹)</label>
                         <input 
                           type="number" 
                           value={currentItem.rate}
                           onChange={(e) => setCurrentItem({ ...currentItem, rate: Number(e.target.value) })}
-                          className="w-full px-3 py-2 text-xs font-bold bg-white border border-gray-200 rounded-xl"
+                          className="w-full px-4 py-3 text-sm font-black bg-white border border-gray-100 rounded-2xl focus:ring-4 focus:ring-accent-cyan/10 transition-all h-[48px]"
                         />
                       </div>
                       <div className="flex items-end">
                         <button 
                           type="button"
                           onClick={() => {
-                            if (!currentItem.name) return;
-                            setPoItems([...poItems, { ...currentItem }]);
+                            if (!currentItem.name || currentItem.name === 'Custom Item Name') {
+                              alert('Please provide a valid item name');
+                              return;
+                            }
+                            setPoItems([...poItems, { ...currentItem, id: currentItem.id === 'CUSTOM' ? Math.random().toString(36).substr(2, 6) : currentItem.id }]);
                             setCurrentItem({ id: '', name: '', qty: 1, unit: 'Nos', rate: 0 });
                           }}
-                          className="w-full py-2 bg-accent-cyan text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary transition-all"
+                          className="w-full h-[48px] bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-accent-cyan transition-all shadow-lg shadow-primary/10"
                         >
-                          Add Item
+                          Add Line
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {poItems.length > 0 && (
-                    <div className="mt-4 space-y-2 max-h-40 overflow-y-auto pr-1">
-                      {poItems.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm">
-                           <div className="flex-1 min-w-0">
-                              <p className="text-[10px] font-bold text-primary truncate">{item.name}</p>
-                              <p className="text-[9px] text-secondary font-medium">{item.qty} {item.unit} @ ₹{item.rate}</p>
-                           </div>
-                           <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-black text-primary">₹{(item.qty * item.rate).toLocaleString()}</span>
-                              <button 
-                                onClick={() => setPoItems(poItems.filter((_, i) => i !== idx))}
-                                className="p-1 hover:text-danger"
-                              >
-                                <X size={12} />
-                              </button>
-                           </div>
+                  <AnimatePresence>
+                    {poItems.length > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        className="mt-6 space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar"
+                      >
+                        <p className="text-[9px] font-black text-secondary uppercase tracking-widest mb-1 opacity-40">Item Summary List</p>
+                        {poItems.map((item, idx) => (
+                          <motion.div 
+                            key={idx} 
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all group"
+                          >
+                             <div className="flex-1 min-w-0">
+                                <p className="text-xs font-black text-primary truncate italic uppercase">{item.name}</p>
+                                <p className="text-[10px] text-secondary font-bold mt-0.5">{item.qty} {item.unit} x ₹{item.rate.toLocaleString()}</p>
+                             </div>
+                             <div className="flex items-center gap-4">
+                                <span className="text-xs font-black text-primary italic">₹{(item.qty * item.rate).toLocaleString()}</span>
+                                <button 
+                                  onClick={() => setPoItems(poItems.filter((_, i) => i !== idx))}
+                                  className="p-2 text-gray-300 hover:text-danger hover:bg-danger/5 rounded-full transition-all"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                             </div>
+                          </motion.div>
+                        ))}
+                        <div className="pt-4 border-t border-gray-200 flex justify-between items-center">
+                          <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">P.O. Valuation:</span>
+                          <span className="text-xl font-black text-primary italic tracking-tighter">₹{poItems.reduce((sum, item) => sum + (item.qty * item.rate), 0).toLocaleString()}</span>
                         </div>
-                      ))}
-                      <div className="pt-2 border-t border-gray-100 flex justify-between items-center">
-                        <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Grand Total:</span>
-                        <span className="text-sm font-black text-primary italic">₹{poItems.reduce((sum, item) => sum + (item.qty * item.rate), 0).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                </div>
                <button 
                 type="submit"
-                className="w-full py-5 bg-primary text-white rounded-3xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 hover:bg-accent-cyan transition-all mt-4"
+                className="w-full py-6 bg-primary text-white rounded-[32px] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/20 hover:bg-accent-cyan hover:scale-[1.02] active:scale-95 transition-all mt-4"
                >
-                 Authorize & Send PO
+                 Authorize & Transmit PO
                </button>
             </form>
           </motion.div>

@@ -31,6 +31,7 @@ interface PaymentRecord {
   date: string;
   forMonth: string;
   reason: string;
+  repaymentMonths?: number;
 }
 
 interface ExternalContact {
@@ -228,16 +229,19 @@ export default function StaffModule() {
     setIsAttendanceModalOpen(false);
   };
 
+  const [payAdvanceType, setPayAdvanceType] = useState<'Advance' | 'Loan'>('Advance');
+  
   const handleSubmitAdvance = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStaffForAdvance) return;
     
     const formData = new FormData(e.currentTarget as HTMLFormElement);
     const amount = Number(formData.get('amount'));
-    const type = formData.get('type') as 'Advance' | 'Loan';
+    const type = payAdvanceType;
     const date = formData.get('date') as string;
     const forMonth = formData.get('forMonth') as string;
     const reason = formData.get('reason') as string;
+    const repaymentMonths = Number(formData.get('repaymentMonths')) || 0;
     
     if (amount <= 0) {
       alert('Amount must be greater than zero');
@@ -251,7 +255,8 @@ export default function StaffModule() {
       amount,
       date,
       forMonth,
-      reason
+      reason,
+      repaymentMonths: type === 'Loan' ? repaymentMonths : undefined
     };
 
     setPaymentRecords([newRecord, ...paymentRecords]);
@@ -449,65 +454,61 @@ export default function StaffModule() {
       {isAdvanceModalOpen && selectedStaffForAdvance && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => setIsAdvanceModalOpen(false)} className="absolute inset-0 bg-primary/20 backdrop-blur-md" />
-          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative bg-white rounded-[40px] shadow-2xl p-8 max-w-lg w-full border border-gray-100 font-sans max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-black text-primary uppercase italic flex items-center gap-2">
-                 <Wallet size={20} className="text-accent-cyan" /> Disbursement Panel
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative bg-white rounded-[40px] shadow-2xl p-10 max-w-lg w-full border border-gray-100 font-sans max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-black text-primary uppercase italic flex items-center gap-3">
+                 <Wallet size={24} className="text-accent-cyan" /> PAY CASH ADVANCE
               </h3>
               <button 
                 onClick={() => setIsHistoryViewOpen(true)}
-                className="px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-secondary transition-all flex items-center gap-2"
+                className="px-5 py-2.5 bg-gray-50 hover:bg-primary hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] text-secondary transition-all flex items-center gap-2 shadow-sm"
               >
-                <History size={14} /> View History
+                <History size={14} /> History
               </button>
             </div>
             
-            <div className="mb-6 p-5 bg-gray-50 rounded-3xl border border-gray-100">
+            <div className="mb-8 p-6 bg-gray-50/50 rounded-[32px] border border-gray-100">
                <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-[10px] font-black text-secondary uppercase tracking-widest leading-none mb-1">Paying To:</p>
-                    <p className="text-lg font-black text-primary italic uppercase tracking-tighter">{selectedStaffForAdvance.name}</p>
+                    <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] leading-none mb-2">PAYING TO:</p>
+                    <p className="text-2xl font-black text-primary italic uppercase tracking-tighter leading-none">{selectedStaffForAdvance.name}</p>
+                    <p className="text-[10px] font-bold text-secondary uppercase mt-2">Current Balance: ₹{selectedStaffForAdvance.advanceBalance + selectedStaffForAdvance.loanBalance}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] font-black text-secondary uppercase tracking-widest leading-none mb-1">Emp ID:</p>
+                    <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] leading-none mb-2">EMP ID:</p>
                     <p className="text-sm font-black text-primary italic uppercase">{selectedStaffForAdvance.id}</p>
-                  </div>
-               </div>
-               <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200/50">
-                  <div>
-                    <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Adv. Balance</p>
-                    <p className="text-sm font-black text-danger">₹{selectedStaffForAdvance.advanceBalance.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-secondary uppercase tracking-widest">Loan Balance</p>
-                    <p className="text-sm font-black text-primary">₹{selectedStaffForAdvance.loanBalance?.toLocaleString() || 0}</p>
                   </div>
                </div>
             </div>
 
-            <form onSubmit={handleSubmitAdvance} className="space-y-5">
+            <form onSubmit={handleSubmitAdvance} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Type</label>
-                  <select name="type" className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm uppercase">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Type of Disbursal</label>
+                  <select 
+                    name="type" 
+                    value={payAdvanceType}
+                    onChange={(e) => setPayAdvanceType(e.target.value as any)}
+                    className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm uppercase focus:ring-4 focus:ring-accent-cyan/10 transition-all shadow-sm h-[56px]"
+                  >
                     <option value="Advance">Salary Advance</option>
                     <option value="Loan">Professional Loan</option>
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Date Paid</label>
-                  <input name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm" />
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Date of Adv. Paid</label>
+                  <input name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm h-[56px] focus:ring-4 focus:ring-accent-cyan/10" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Advance Amount (₹)</label>
-                  <input name="amount" type="number" required placeholder="Ex: 5000" className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-black text-lg text-primary italic" />
+                  <input name="amount" type="number" required placeholder="5000" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-black text-2xl text-primary italic h-[56px] focus:ring-4 focus:ring-accent-cyan/10" />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">For Month</label>
-                  <select name="forMonth" className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm uppercase">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">For Which Month</label>
+                  <select name="forMonth" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm uppercase h-[56px] focus:ring-4 focus:ring-accent-cyan/10 appearance-none">
                     {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => (
                       <option key={m} value={m} selected={m === new Date().toLocaleString('default', { month: 'long' })}>{m}</option>
                     ))}
@@ -515,20 +516,27 @@ export default function StaffModule() {
                 </div>
               </div>
 
-              <div className="space-y-1">
+              {payAdvanceType === 'Loan' && (
+                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Repayment Duration (Months)</label>
+                  <input name="repaymentMonths" type="number" defaultValue="12" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm h-[56px] focus:ring-4 focus:ring-accent-cyan/10" />
+                </motion.div>
+              )}
+
+              <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-secondary tracking-widest ml-1">Reason / Memo</label>
-                <input name="reason" placeholder="Ex: Medical, Family trip, Emergency" className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold" />
+                <input name="reason" placeholder="Ex: Medical, Family trip, Emergency" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold h-[56px] focus:ring-4 focus:ring-accent-cyan/10" />
               </div>
               
-              <div className="p-4 bg-accent-amber/5 rounded-2xl border border-accent-amber/20">
-                <p className="text-[10px] font-medium text-primary italic leading-relaxed">
-                  * Advances are deducted from the <span className="font-bold underline">next payroll cycle</span>. Loans can follow extended repayment terms.
+              <div className="p-5 bg-primary/5 rounded-[32px] border border-primary/10">
+                <p className="text-[10px] font-medium text-primary italic leading-relaxed text-center">
+                  * This amount will be tracked as an <span className="font-bold underline italic">Asset</span> and can be deducted from the next payroll cycle.
                 </p>
               </div>
 
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setIsAdvanceModalOpen(false)} className="flex-1 py-4 bg-gray-100 text-secondary rounded-2xl font-black uppercase tracking-widest text-[10px]">Close</button>
-                <button type="submit" className="flex-[2] py-4 bg-primary text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-xl shadow-primary/20 hover:bg-accent-cyan transition-all">Disburse Funds</button>
+              <div className="flex gap-4">
+                <button type="button" onClick={() => setIsAdvanceModalOpen(false)} className="flex-1 py-5 bg-gray-100 text-secondary rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] hover:bg-gray-200 transition-all">Close</button>
+                <button type="submit" className="flex-[2] py-5 bg-primary text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] shadow-xl shadow-primary/20 hover:bg-accent-cyan transition-all">Disburse Cash</button>
               </div>
             </form>
           </motion.div>
@@ -559,7 +567,12 @@ export default function StaffModule() {
                          </div>
                          <div>
                             <p className="text-sm font-black text-primary italic uppercase underline decoration-2 decoration-gray-200 underline-offset-4">{record.type}: ₹{record.amount.toLocaleString()}</p>
-                            <p className="text-[10px] font-bold text-secondary mt-1">{record.date} • For {record.forMonth}</p>
+                            <p className="text-[10px] font-bold text-secondary mt-1">
+                               {record.date} • For {record.forMonth}
+                               {record.type === 'Loan' && record.repaymentMonths && (
+                                 <span className="text-accent-cyan ml-2">• {record.repaymentMonths} Mo. Loan</span>
+                               )}
+                            </p>
                             {record.reason && <p className="text-[10px] text-primary italic mt-0.5 opacity-60">“{record.reason}”</p>}
                          </div>
                       </div>
