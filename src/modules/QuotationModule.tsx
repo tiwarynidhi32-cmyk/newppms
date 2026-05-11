@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Search, FileText, Download, Printer, Calculator, X, Save, CheckCircle, ChevronRight, User, Hash, Calendar, ArrowUpRight } from 'lucide-react';
-import { Quotation, PricingConfig } from '../types';
+import { Quotation, PricingConfig, QuotationItem } from '../types';
 
 export default function QuotationModule() {
   const [isModalOpen, setIsModalOpen] = useState(false);

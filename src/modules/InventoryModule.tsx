@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Package, Plus, Search, Filter, AlertCircle, ArrowDownCircle, ArrowUpCircle, X, 
   Tag, Box, Layers, History, Users, TrendingDown, TrendingUp, Info, MoreHorizontal,
-  ChevronDown, DollarSign, Calculator, Printer, FileText, Truck, Camera, Settings, Trash2
+  ChevronDown, DollarSign, Calculator, Printer, FileText, Truck, Camera, Settings, Trash2, Briefcase
 } from 'lucide-react';
 
 interface InventoryItem {

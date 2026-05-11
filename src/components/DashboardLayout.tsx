@@ -55,7 +55,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick, subItems, activeTab, 
 
 export default function DashboardLayout({ children, activeTab }: { children: React.ReactNode, activeTab: string }) {
   const navigate = useNavigate();
-  const [expandedMenus, setExpandedMenus] = React.useState<string[]>(['job-management']);
+  const [expandedMenus, setExpandedMenus] = React.useState<string[]>(['pipeline', 'job-management', 'external-ops', 'admin-panel']);
 
   const toggleMenu = (id: string) => {
     setExpandedMenus(prev => 
@@ -112,13 +112,12 @@ export default function DashboardLayout({ children, activeTab }: { children: Rea
       ]
     },
     { id: 'reports', label: 'Analysis & Reports', icon: BarChart2 },
-    { id: 'support', label: 'Support & Tickets', icon: HelpCircle },
   ];
 
   return (
     <div className="flex h-screen bg-app-bg">
       {/* Sidebar */}
-      <aside className="w-64 bg-primary flex flex-col p-4 shadow-2xl z-20 relative overflow-hidden">
+      <aside className="w-64 bg-primary flex flex-col p-4 shadow-2xl z-[100] relative overflow-hidden">
         {/* Background SVG Decoration for Sidebar */}
         <div className="absolute inset-0 opacity-5 pointer-events-none">
           <svg width="100%" height="100%" viewBox="0 0 256 768" xmlns="http://www.w3.org/2000/svg">
