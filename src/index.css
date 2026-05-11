@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* PPMS Immersive UI Palette */
+  --color-primary: #1E3A5F;     /* Deep Indigo Blue */
+  --color-secondary: #64748B;   /* Slate Gray */
+  --color-accent-cyan: #06B6D4; /* Cyan */
+  --color-accent-magenta: #D946EF; /* Magenta */
+  --color-accent-amber: #F59E0B; /* Amber */
+  --color-success: #22C55E;     /* Green */
+  --color-danger: #EF4444;      /* Red */
+  --color-app-bg: #F8FAFC;      /* Background */
+  --color-card-bg: #FFFFFF;     /* Card */
+  --color-text-muted: #CBD5F5;  /* Light blue-gray for text on dark bg */
+
+  --radius-2xl: 20px;
+  --radius-xl: 12px;
+  --radius-lg: 8px;
+}
+
+@layer base {
+  body {
+    @apply bg-app-bg text-secondary font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-primary font-bold tracking-tight;
+  }
+}
+
+.immersive-bg {
+  background: linear-gradient(135deg, #1E3A5F 0%, #0f1d30 100%);
+}
+
+.login-overlay {
+  background: linear-gradient(135deg, rgba(30, 58, 95, 0.85) 0%, rgba(15, 29, 48, 0.95) 100%);
+}
+
+.glass-card {
+  @apply bg-white/95 backdrop-blur-md border border-white/20 shadow-2xl;
+  border-radius: var(--radius-2xl);
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-accent-cyan to-accent-magenta;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-black/5;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/70 rounded-full hover:bg-primary/90 transition-colors;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-secondary/80 border-2 border-white;
+}
+
+@media print {
+  body {
+    display: none !important;
+  }
+}
+
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
