@@ -58,7 +58,13 @@ export default function AccountingModule() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
-  const [financialYear, setFinancialYear] = useState('2024-25');
+  const [financialYears] = useState<string[]>(() => {
+    const saved = localStorage.getItem('printing_pms_fy_list');
+    return saved ? JSON.parse(saved) : ['FY 2022-23', 'FY 2023-24', 'FY 2024-25'];
+  });
+  const [financialYear, setFinancialYear] = useState(() => {
+    return localStorage.getItem('printing_pms_active_fy') || 'FY 2024-25';
+  });
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const [voucherData, setVoucherData] = useState({
     party: '',
@@ -477,9 +483,7 @@ export default function AccountingModule() {
                   onChange={(e) => setFinancialYear(e.target.value)}
                   className="text-[10px] font-black text-primary bg-transparent outline-none cursor-pointer"
                 >
-                   <option value="2024-25">2024-25</option>
-                   <option value="2023-24">2023-24</option>
-                   <option value="2022-23">2022-23</option>
+                   {financialYears.map(fy => <option key={fy} value={fy}>{fy}</option>)}
                 </select>
              </div>
              {activeTab !== 'Tally' && (

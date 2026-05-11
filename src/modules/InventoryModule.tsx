@@ -147,7 +147,12 @@ export default function InventoryModule() {
     const saved = localStorage.getItem('printing_pms_customers');
     return saved ? JSON.parse(saved) : [];
   });
-  
+
+  const [machines] = useState<any[]>(() => {
+    const saved = localStorage.getItem('printing_pms_machines');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [inventory, setInventory] = useState<InventoryItem[]>(() => {
     const saved = localStorage.getItem('printing_pms_inventory');
     return saved ? JSON.parse(saved) : mockInventory;
@@ -183,6 +188,7 @@ export default function InventoryModule() {
   const [grnLines, setGrnLines] = useState<{itemName: string, qty: number, description: string, unit: string}[]>([{itemName: '', qty: 0, description: '', unit: ''}]);
   const [isWastageModalOpen, setIsWastageModalOpen] = useState(false);
   const [editingWarehouse, setEditingWarehouse] = useState<Warehouse | null>(null);
+  const [issueTargetType, setIssueTargetType] = useState<'JOB-CARD' | 'MACHINE'>('JOB-CARD');
   
   const [wastageLogs, setWastageLogs] = useState<{id: string, itemName: string, qty: number, reason: string, date: string}[]>(() => {
     const saved = localStorage.getItem('printing_pms_wastage');
@@ -512,7 +518,8 @@ export default function InventoryModule() {
                         <td className="px-6 py-4">
                            <p className="text-sm font-bold text-primary">₹{item.purchasePrice.toFixed(2)} / {item.quantityUom}</p>
                            <p className="text-[10px] text-secondary font-bold flex items-center gap-1 mt-1">
-                              <Users size={10} /> {item.supplierName}
+                               {item.source === 'Party-Provided' ? <Briefcase size={10} /> : <Users size={10} />}
+                               {item.source === 'Party-Provided' ? `Party: ${item.providedBy || 'Unknown'}` : item.supplierName}
                            </p>
                            <div className="flex items-center gap-3 mt-1.5 overflow-hidden">
                               <span className="text-[9px] font-black text-white bg-primary px-1.5 py-0.5 rounded border border-primary/20 shrink-0">HSN: {item.hsnCode || 'N/A'}</span>
@@ -1162,14 +1169,17 @@ export default function InventoryModule() {
                                       </select>
                                    </div>
                                    <div className="w-32">
-                                      <p className="text-[10px] font-bold text-secondary uppercase mb-1">Qty ({line.unit || '...' })</p>
-                                      <input 
-                                        type="number" 
-                                        value={line.qty || ''}
-                                        onChange={(e) => updateGrnLine(index, 'qty', Number(e.target.value))}
-                                        className="w-full bg-transparent font-black text-sm outline-none" 
-                                        placeholder="0" 
-                                      />
+                                      <p className="text-[10px] font-bold text-secondary uppercase mb-1">Stock Unit / Receipt Qty</p>
+                                      <div className="flex items-center gap-1">
+                                         <span className="text-[10px] font-bold text-accent-cyan bg-accent-cyan/5 px-2 py-0.5 rounded border border-accent-cyan/10 italic leading-none h-[28px] flex items-center">{line.unit || 'Unit'}</span>
+                                         <input 
+                                           type="number" 
+                                           value={line.qty || ''}
+                                           onChange={(e) => updateGrnLine(index, 'qty', Number(e.target.value))}
+                                           className="w-full bg-transparent font-black text-sm outline-none border-b border-gray-100" 
+                                           placeholder="0" 
+                                         />
+                                      </div>
                                    </div>
                                    <button 
                                       onClick={() => removeGrnLine(index)} 
@@ -1456,15 +1466,15 @@ export default function InventoryModule() {
                  e.preventDefault();
                  const formData = new FormData(e.currentTarget);
                  const qty = Number(formData.get('issueQty'));
-                 const targetType = formData.get('targetType') as string;
-                 const targetId = (targetType === 'JOB-CARD' ? formData.get('targetIdJob') : formData.get('targetIdMachine')) as string;
+                 
+                 const targetId = (issueTargetType === 'JOB-CARD' ? formData.get('targetIdJob') : formData.get('targetIdMachine')) as string;
 
                  if (qty > itemToIssue.currentStock) {
                    alert('Insufficient stock available!');
                    return;
                  }
                  if (!targetId) {
-                   alert(`Please select a valid ${targetType === 'JOB-CARD' ? 'Job' : 'Machine'}`);
+                   alert(`Please select a valid ${issueTargetType === 'JOB-CARD' ? 'Job' : 'Machine'}`);
                    return;
                  }
 
@@ -1474,7 +1484,7 @@ export default function InventoryModule() {
                      : inv
                  ));
 
-                 alert(`Successfully issued ${qty} ${itemToIssue.quantityUom} to ${targetType}: ${targetId}`);
+                 alert(`Successfully issued ${qty} ${itemToIssue.quantityUom} to ${issueTargetType}: ${targetId}`);
                  setIsIssueModalOpen(false);
                }} className="space-y-6">
                  <div className="grid grid-cols-2 gap-4">
@@ -1484,37 +1494,40 @@ export default function InventoryModule() {
                          name="targetType" 
                          className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold text-sm" 
                          required
-                         onChange={(e) => {
-                            const jList = document.getElementById('issueTargetJob');
-                            const mList = document.getElementById('issueTargetMachine');
-                            if (jList && mList) {
-                               jList.style.display = e.target.value === 'JOB-CARD' ? 'block' : 'none';
-                               mList.style.display = e.target.value === 'MACHINE' ? 'block' : 'none';
-                            }
-                         }}
+                         value={issueTargetType}
+                         onChange={(e) => setIssueTargetType(e.target.value as any)}
                        >
                           <option value="JOB-CARD">Job Card Order</option>
                           <option value="MACHINE">Machine (Spare Parts)</option>
                        </select>
                     </div>
-                     <div className="space-y-2 flex-1">
-                        <div id="issueTargetJob">
-                           <label className="text-[10px] font-black text-primary uppercase ml-1">Select Job Card</label>
-                           <select name="targetIdJob" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-primary">
-                              <option value="">Choose Job Reference...</option>
-                              {jobs.map(j => <option key={j.id} value={j.jcNo}>{j.jcNo} - {j.bookTitle}</option>)}
-                           </select>
-                        </div>
-                        <div id="issueTargetMachine" style={{ display: 'none' }}>
-                           <label className="text-[10px] font-black text-primary uppercase ml-1">Select Machine</label>
-                           <select name="targetIdMachine" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-primary">
-                              <option value="">Choose Machine Asset...</option>
-                              {['Heidelberg SM 74', 'Komori Lithrone G40', 'Polar 115 Paper Cutter', 'Folding Machine'].map(m => (
-                                <option key={m} value={m}>{m}</option>
-                              ))}
-                           </select>
-                        </div>
-                     </div>
+                      <div className="space-y-2 flex-1 text-left">
+                        {issueTargetType === 'JOB-CARD' ? (
+                          <div>
+                            <label className="text-[10px] font-black text-primary uppercase ml-1">Select Job Card</label>
+                            <select name="targetIdJob" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-primary">
+                               <option value="">Choose Job Reference...</option>
+                               {jobs.map((j: any) => <option key={j.id} value={j.jcNo}>{j.jcNo} - {j.bookTitle || j.customerName}</option>)}
+                            </select>
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="text-[10px] font-black text-primary uppercase ml-1">Select Machine</label>
+                            <select name="targetIdMachine" className="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-sm outline-none focus:ring-2 focus:ring-primary">
+                               <option value="">Choose Machine Asset...</option>
+                               {machines.length > 0 ? (
+                                 machines.map(m => (
+                                   <option key={m.id} value={m.name}>{m.name} ({m.model})</option>
+                                 ))
+                               ) : (
+                                 ['Heidelberg SM 74', 'Komori Lithrone G40', 'Polar 115 Paper Cutter', 'Folding Machine'].map(m => (
+                                   <option key={m} value={m}>{m}</option>
+                                 ))
+                               )}
+                            </select>
+                          </div>
+                        )}
+                      </div>
                  </div>
 
                  <div className="space-y-2">

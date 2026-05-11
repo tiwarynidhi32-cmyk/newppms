@@ -134,6 +134,7 @@ export default function BillingModule() {
   });
   
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string>('');
   const [customerGst, setCustomerGst] = useState('');
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [newInvoiceItem, setNewInvoiceItem] = useState<Partial<InvoiceItem>>({
@@ -166,13 +167,19 @@ export default function BillingModule() {
     const totalDiscount = items.reduce((sum, item) => sum + (item.discount || 0), 0);
     const taxableAmount = subtotal - totalDiscount;
     const totalTax = items.reduce((sum, item) => sum + ((item.qty * item.rate - (item.discount || 0)) * (item.tax || 0) / 100), 0);
-    let finalTotal = taxableAmount + totalTax + additionalCharges;
+    
+    let tcsAmount = 0;
+    if (applyTCS) {
+      tcsAmount = (taxableAmount + totalTax) * 0.00075; // 0.075% TCS
+    }
+
+    let finalTotal = taxableAmount + totalTax + additionalCharges + tcsAmount;
     
     if (autoRoundOff) {
       finalTotal = Math.round(finalTotal);
     }
     
-    return { subtotal, totalDiscount, taxableAmount, totalTax, finalTotal };
+    return { subtotal, totalDiscount, taxableAmount, totalTax, finalTotal, tcsAmount };
   };
 
   const totals = calculateTotals(invoiceItems);
@@ -264,7 +271,7 @@ export default function BillingModule() {
       prefix: invoicePrefix,
       invoiceNo: `${invoicePrefix}${invoiceNo}`,
       invoiceNumberNumeric: invoiceNo,
-      jobIds: [], 
+      jobIds: selectedJobId ? [selectedJobId] : [], 
       customerName: selectedCustomer.name || selectedCustomer,
       customerGst: customerGst,
       date: invoiceDate,
@@ -302,6 +309,7 @@ export default function BillingModule() {
     setInvoiceNo(invoices.length + 2);
     setInvoiceItems([]);
     setSelectedCustomer(null);
+    setSelectedJobId('');
     setCustomerGst('');
     setEwayBillNo('');
     setVehicleNo('');
@@ -309,6 +317,41 @@ export default function BillingModule() {
     setOrderDate('');
     setNotes('');
     setAdditionalCharges(0);
+  };
+
+  const handleJobSelect = (jobId: string) => {
+    setSelectedJobId(jobId);
+    if (!jobId) return;
+
+    const job = allJobs.find((j: any) => j.id === jobId || j.jcNo === jobId);
+    if (!job) return;
+
+    // 1. Find Customer
+    const customer = allCustomers.find((c: any) => c.name === job.party || c.id === job.customerID);
+    if (customer) {
+      setSelectedCustomer(customer);
+      setCustomerGst(customer.gst || customer.taxInfo?.gstNumber || '');
+    } else {
+      setSelectedCustomer({ name: job.party });
+    }
+
+    // 2. Map Job details to Invoice Items if empty or add to it
+    const newItem: InvoiceItem = {
+      id: Math.random().toString(36).substr(2, 6),
+      description: `${job.productType}: ${job.bookTitle || 'Custom Print Job'}`,
+      hsnCode: job.productType === 'Booklet' || job.productType === 'Brochure' ? '4901' : '4819',
+      format: job.size || '',
+      qty: Number(job.quantity),
+      rate: 0, // Rate needs to be entered or fetched from quotation if linked
+      discount: 0,
+      tax: 12,
+      amount: 0,
+      subDescription: `Job Card: ${job.jcNo}`
+    };
+
+    setInvoiceItems([newItem]);
+    setOrderNo(job.jcNo);
+    setOrderDate(job.jcDate);
   };
 
   const addInvoiceItem = () => {
@@ -605,47 +648,71 @@ export default function BillingModule() {
                    <div className="flex flex-col lg:flex-row gap-12">
                       {/* Left: Bill To */}
                       <div className="flex-1 space-y-6">
-                         <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] opacity-40">Bill To</p>
+                         <p className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] opacity-40">Client & Job Mapping</p>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div 
-                              className="border-2 border-dashed border-primary/10 rounded-3xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-accent-cyan hover:bg-accent-cyan/5 transition-all group"
-                              onClick={() => {
-                                const customer = allCustomers[Math.floor(Math.random() * allCustomers.length)];
-                                if (customer) {
-                                  setSelectedCustomer(customer);
-                                  setCustomerGst(customer.taxInfo?.gstNumber || '');
-                                } else {
-                                  setSelectedCustomer({ name: 'New Walk-in Customer' });
-                                }
-                              }}
-                            >
-                               <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                                  <PlusCircle className="text-secondary group-hover:text-accent-cyan" />
-                               </div>
-                               <span className="text-[10px] font-black text-secondary group-hover:text-accent-cyan uppercase tracking-widest">+ Add Party</span>
+                            {/* Job Selector */}
+                            <div className="space-y-1 text-left">
+                               <label className="text-[9px] font-black text-secondary uppercase opacity-60">Link to Job Card</label>
+                               <select 
+                                 value={selectedJobId} 
+                                 onChange={(e) => handleJobSelect(e.target.value)}
+                                 className="w-full bg-white border border-gray-100 px-4 py-3 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-accent-cyan/10 transition-all shadow-sm h-[48px]"
+                               >
+                                  <option value="">-- No Active Job Linked --</option>
+                                  {allJobs
+                                    .filter((j: any) => j.status === 'Completed' || j.status === 'Delivered')
+                                    .map((j: any) => (
+                                      <option key={j.id} value={j.id}>{j.jcNo} - {j.party} ({j.bookTitle})</option>
+                                    ))
+                                  }
+                               </select>
                             </div>
 
-                            {selectedCustomer && (
-                              <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 relative group">
-                                <button 
-                                  onClick={() => { setSelectedCustomer(null); setCustomerGst(''); }} 
-                                  className="absolute top-4 right-4 p-2 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <X size={14} className="text-danger" />
-                                </button>
-                                <h4 className="text-xl font-black text-primary italic uppercase mb-2">{selectedCustomer.name}</h4>
-                                <div className="space-y-1">
-                                  <p className="text-[10px] font-bold text-secondary uppercase opacity-60">Customer GSTIN</p>
-                                  <input 
-                                    value={customerGst}
-                                    onChange={(e) => setCustomerGst(e.target.value)}
-                                    placeholder="Enter GST Number"
-                                    className="bg-transparent font-mono text-sm font-black text-primary outline-none focus:text-accent-cyan transition-colors"
-                                  />
-                                </div>
-                              </div>
-                            )}
+                            {/* Customer Selector */}
+                            <div className="space-y-1 text-left">
+                               <label className="text-[9px] font-black text-secondary uppercase opacity-60">Select Party</label>
+                               <select 
+                                 value={selectedCustomer?.id || ''} 
+                                 onChange={(e) => {
+                                   const cust = allCustomers.find((c: any) => c.id === e.target.value);
+                                   if (cust) {
+                                     setSelectedCustomer(cust);
+                                     setCustomerGst(cust.gst || cust.taxInfo?.gstNumber || '');
+                                   }
+                                 }}
+                                 className="w-full bg-white border border-gray-100 px-4 py-3 rounded-2xl text-xs font-bold outline-none focus:ring-4 focus:ring-accent-cyan/10 transition-all shadow-sm h-[48px]"
+                               >
+                                  <option value="">-- Choose Registered Party --</option>
+                                  {allCustomers.map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                  ))}
+                               </select>
+                            </div>
                          </div>
+
+                         {selectedCustomer && (
+                           <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 relative group flex items-start justify-between text-left">
+                             <div>
+                               <h4 className="text-xl font-black text-primary italic uppercase mb-2 leading-none">{selectedCustomer.name}</h4>
+                               <p className="text-[10px] font-bold text-secondary uppercase opacity-60 mb-4">{selectedCustomer.company || (selectedCustomer.id ? 'Registered Client' : 'Direct Client')}</p>
+                               <div className="space-y-1 mt-4">
+                                 <p className="text-[10px] font-bold text-secondary uppercase opacity-60">Customer GSTIN</p>
+                                 <input 
+                                   value={customerGst}
+                                   onChange={(e) => setCustomerGst(e.target.value)}
+                                   placeholder="Enter GST Number"
+                                   className="bg-transparent font-mono text-sm font-black text-primary outline-none focus:text-accent-cyan transition-colors"
+                                 />
+                               </div>
+                             </div>
+                             <button 
+                               onClick={() => { setSelectedCustomer(null); setCustomerGst(''); setSelectedJobId(''); }} 
+                               className="p-2 bg-white rounded-full shadow-sm hover:bg-danger/10 hover:text-danger transition-all"
+                             >
+                               <Trash2 size={16} />
+                             </button>
+                           </div>
+                         )}
                       </div>
 
                       {/* Right: Invoice Info */}

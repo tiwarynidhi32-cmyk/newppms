@@ -172,9 +172,17 @@ export default function DashboardLayout({ children, activeTab }: { children: Rea
           <div className="flex items-center gap-8 flex-1">
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Financial Year:</span>
-                <select className="bg-app-bg border-none text-[11px] font-bold px-3 py-1.5 rounded-full outline-none focus:ring-2 focus:ring-accent-cyan transition-all">
-                   <option>FY 2024-25</option>
-                   <option>FY 2023-24</option>
+                <select 
+                  className="bg-app-bg border-none text-[11px] font-bold px-3 py-1.5 rounded-full outline-none focus:ring-2 focus:ring-accent-cyan transition-all"
+                  value={localStorage.getItem('printing_pms_active_fy') || 'FY 2024-25'}
+                  onChange={(e) => {
+                    localStorage.setItem('printing_pms_active_fy', e.target.value);
+                    window.location.reload();
+                  }}
+                >
+                   {JSON.parse(localStorage.getItem('printing_pms_fy_list') || '["FY 2022-23", "FY 2023-24", "FY 2024-25"]').map((fy: string) => (
+                     <option key={fy} value={fy}>{fy}</option>
+                   ))}
                 </select>
              </div>
              

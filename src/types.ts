@@ -243,7 +243,40 @@ export interface PricingConfig {
     ratePerHour: number;
     setupCost: number;
   }[];
-  inkCostPerColor?: number;
+  inkCostPerColor: number;
+  plateCostPerPlate: number;
+  laborCostPerManHour: number;
+  overheadPercentage: number;
+  profitMarginPercentage: number;
+  gstPercentage: number;
+}
+
+export interface QuotationItem {
+  id: string;
+  product: string;
+  size: string;
+  quantity: number;
+  details: string;
+  paperType: string;
+  gsm: number;
+  printingType: string;
+  noOfColors: number;
+  noOfPlates: number;
+  laborHours: number;
+  finishingCost: number;
+  costs: {
+    paper: number;
+    printing: number;
+    ink: number;
+    plate: number;
+    labor: number;
+    overhead: number;
+    profit: number;
+    subtotal: number;
+    gst: number;
+    total: number;
+    unitPrice: number;
+  };
 }
 
 export interface Quotation {
@@ -251,24 +284,10 @@ export interface Quotation {
   quotationNo: string;
   date: string;
   customerName: string;
-  product: string;
-  size: string;
-  details: string;
-  quantity: number;
-  paperType: string;
-  printingType: string;
-  finishing: string[];
-  paperCost: number;
-  printingCost: number;
-  inkCost: number;
-  plateCost: number;
-  laborCost: number;
-  finishingCost: number;
-  overheads: number;
-  profitAmount: number;
-  unitPrice: number;
+  items: QuotationItem[];
   totalAmount: number;
   gstAmount: number;
   grandTotal: number;
   status: 'Draft' | 'Sent' | 'Approved' | 'Converted' | 'Rejected';
+  remarks?: string;
 }
